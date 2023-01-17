@@ -390,53 +390,6 @@ ptdl_dl() {
   echo "* Downloaded jexactyl panel files & installed composer dependencies!"
 }
 
-# Create a databse with user
-create_database() {
-  if [ "$OS" == "centos" ]; then
-    # secure MariaDB
-    echo "* MariaDB secure installation. The following are safe defaults."
-    echo "* Set root password? [Y/n] Y"
-    echo "* Remove anonymous users? [Y/n] Y"
-    echo "* Disallow root login remotely? [Y/n] Y"
-    echo "* Remove test database and access to it? [Y/n] Y"
-    echo "* Reload privilege tables now? [Y/n] Y"
-    echo "*"
-
-    [ "$OS_VER_MAJOR" == "7" ] && mariadb-secure-installation
-    [ "$OS_VER_MAJOR" == "8" ] && mysql_secure_installation
-
-    echo "* The script should have asked you to set the MySQL root password earlier (not to be confused with the pterodactyl database user password)"
-    echo "* MySQL will now ask you to enter the password before each command."
-
-    echo "* Create MySQL user."
-    mysql -u root -p -e "CREATE USER '${MYSQL_USER}'@'127.0.0.1' IDENTIFIED BY '${MYSQL_PASSWORD}';"
-
-    echo "* Create database."
-    mysql -u root -p -e "CREATE DATABASE ${MYSQL_DB};"
-
-    echo "* Grant privileges."
-    mysql -u root -p -e "GRANT ALL PRIVILEGES ON ${MYSQL_DB}.* TO '${MYSQL_USER}'@'127.0.0.1' WITH GRANT OPTION;"
-
-    echo "* Flush privileges."
-    mysql -u root -p -e "FLUSH PRIVILEGES;"
-  else
-    echo "* Performing MySQL queries.."
-
-    echo "* Creating MySQL user.."
-    mysql -u root -e "CREATE USER '${MYSQL_USER}'@'127.0.0.1' IDENTIFIED BY '${MYSQL_PASSWORD}';"
-
-    echo "* Creating database.."
-    mysql -u root -e "CREATE DATABASE ${MYSQL_DB};"
-
-    echo "* Granting privileges.."
-    mysql -u root -e "GRANT ALL PRIVILEGES ON ${MYSQL_DB}.* TO '${MYSQL_USER}'@'127.0.0.1' WITH GRANT OPTION;"
-
-    echo "* Flushing privileges.."
-    mysql -u root -e "FLUSH PRIVILEGES;"
-
-    echo "* MySQL database created & configured!"
-  fi
-}
 
 # Configure environment
 configure() {
@@ -538,17 +491,13 @@ dnf_update() {
 }
 
 enable_services_debian_based() {
-  systemctl enable mariadb
   systemctl enable redis-server
-  systemctl start mariadb
   systemctl start redis-server
 }
 
 enable_services_centos_based() {
-  systemctl enable mariadb
   systemctl enable nginx
   systemctl enable redis
-  systemctl start mariadb
   systemctl start redis
 }
 
@@ -574,7 +523,7 @@ ubuntu22_dep() {
   apt_update
 
   # Install Dependencies
-  apt -y install php8.0 php8.0-{cli,gd,mysql,pdo,mbstring,tokenizer,bcmath,xml,fpm,curl,zip} mariadb-server nginx tar unzip git redis-server redis cron
+  apt -y install php8.0 php8.0-{cli,gd,mysql,pdo,mbstring,tokenizer,bcmath,xml,fpm,curl,zip} nginx tar unzip git redis-server redis cron
 
   # Enable services
   enable_services_debian_based
@@ -598,7 +547,7 @@ ubuntu20_dep() {
   apt_update
 
   # Install Dependencies
-  apt -y install php8.0 php8.0-{cli,gd,mysql,pdo,mbstring,tokenizer,bcmath,xml,fpm,curl,zip} mariadb-server nginx tar unzip git redis-server redis cron
+  apt -y install php8.0 php8.0-{cli,gd,mysql,pdo,mbstring,tokenizer,bcmath,xml,fpm,curl,zip} nginx tar unzip git redis-server redis cron
 
   # Enable services
   enable_services_debian_based
@@ -618,14 +567,13 @@ ubuntu18_dep() {
   # Add PPA for PHP (we need 8.0 and bionic only has 7.2)
   LC_ALL=C.UTF-8 add-apt-repository -y ppa:ondrej/php
 
-  # Add the MariaDB repo (bionic has mariadb version 10.1 and we need newer than that)
-  curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash
+
 
   # Update repositories list
   apt_update
 
   # Install Dependencies
-  apt -y install php8.0 php8.0-{cli,gd,mysql,pdo,mbstring,tokenizer,bcmath,xml,fpm,curl,zip} mariadb-server nginx tar unzip git redis-server redis cron
+  apt -y install php8.0 php8.0-{cli,gd,mysql,pdo,mbstring,tokenizer,bcmath,xml,fpm,curl,zip} nginx tar unzip git redis-server redis cron
 
   # Enable services
   enable_services_debian_based
@@ -644,14 +592,12 @@ debian_stretch_dep() {
   curl -o /etc/apt/trusted.gpg.d/php.gpg https://packages.sury.org/php/apt.gpg
   echo "deb https://packages.sury.org/php/ $(lsb_release -sc) main" | tee /etc/apt/sources.list.d/php.list
 
-  # Add the MariaDB repo (oldstable has mariadb version 10.1 and we need newer than that)
-  curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | bash
 
   # Update repositories list
   apt_update
 
   # Install Dependencies
-  apt -y install php8.0 php8.0-{cli,gd,mysql,pdo,mbstring,tokenizer,bcmath,xml,fpm,curl,zip} mariadb-server nginx curl tar unzip git redis-server cron
+  apt -y install php8.0 php8.0-{cli,gd,mysql,pdo,mbstring,tokenizer,bcmath,xml,fpm,curl,zip} nginx curl tar unzip git redis-server cron
 
   # Enable services
   enable_services_debian_based
@@ -675,7 +621,7 @@ debian_buster_dep() {
   apt_update
 
   # install dependencies
-  apt -y install php8.0 php8.0-{cli,gd,mysql,pdo,mbstring,tokenizer,bcmath,xml,fpm,curl,zip} mariadb-server nginx curl tar unzip git redis-server cron
+  apt -y install php8.0 php8.0-{cli,gd,mysql,pdo,mbstring,tokenizer,bcmath,xml,fpm,curl,zip} nginx curl tar unzip git redis-server cron
 
   # Enable services
   enable_services_debian_based
@@ -699,7 +645,7 @@ debian_dep() {
   apt_update
 
   # install dependencies
-  apt -y install php8.0 php8.0-{cli,gd,mysql,pdo,mbstring,tokenizer,bcmath,xml,fpm,curl,zip} mariadb-server nginx curl tar unzip git redis-server cron
+  apt -y install php8.0 php8.0-{cli,gd,mysql,pdo,mbstring,tokenizer,bcmath,xml,fpm,curl,zip} nginx curl tar unzip git redis-server cron
 
   # Enable services
   enable_services_debian_based
@@ -720,11 +666,8 @@ centos7_dep() {
   yum-config-manager -y --enable remi-php80
   yum_update
 
-  # Install MariaDB
-  curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash
-
   # Install dependencies
-  yum -y install php php-common php-tokenizer php-curl php-fpm php-cli php-json php-mysqlnd php-mcrypt php-gd php-mbstring php-pdo php-zip php-bcmath php-dom php-opcache mariadb-server nginx curl tar zip unzip git redis
+  yum -y install php php-common php-tokenizer php-curl php-fpm php-cli php-json php-mysqlnd php-mcrypt php-gd php-mbstring php-pdo php-zip php-bcmath php-dom php-opcache nginx curl tar zip unzip git redis
 
   # Enable services
   enable_services_centos_based
@@ -748,8 +691,6 @@ centos8_dep() {
 
   dnf install -y php php-common php-fpm php-cli php-json php-mysqlnd php-gd php-mbstring php-pdo php-zip php-bcmath php-dom php-opcache
 
-  # MariaDB (use from official repo)
-  dnf install -y mariadb mariadb-server
 
   # Other dependencies
   dnf install -y nginx curl tar zip unzip git redis
